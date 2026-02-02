@@ -18,3 +18,16 @@ class EmotionHistoryResponse(BaseModel):
 
     class Config:
         orm_mode = True
+        
+class UserRegister(BaseModel):
+    email: str
+    password: str
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+

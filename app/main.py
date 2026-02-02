@@ -5,9 +5,11 @@ from app.risk_engine import calculate_risk
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from typing import List
-from app.schemas import EmotionHistoryResponse
+from app.schemas import EmotionHistoryResponse,TokenResponse,UserRegister,UserLogin
 from app.database import get_db
-from app.models import EmotionHistory
+from app.models import EmotionHistory,User
+from app.auth import hash_password, verify_password, create_access_token
+from fastapi import FastAPI, Depends, HTTPException
 
 app = FastAPI()
 
@@ -50,4 +52,28 @@ def get_emotion_history(db: Session = Depends(get_db)):
         .all()
     )
     return records
+
+@app.post("/register")
+def register_user(user: UserRegister, db: Session = Depends(get_db)):
+    existing = db.query(User).filter(User.email == user.email).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    new_user = User(
+        email=user.email,
+        hashed_password=hash_password(user.password)
+    )
+    db.add(new_user)
+    db.commit()
+    return {"message": "User registered successfully"}
+
+@app.post("/login", response_model=TokenResponse)
+def login_user(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token({"sub": db_user.email})
+    return {"access_token": token}
 
