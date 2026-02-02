@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.schemas import EmotionRequest, EmotionResponse
 from app.emotion_model import detect_emotion
 from app.risk_engine import calculate_risk
@@ -11,6 +12,15 @@ from app.models import EmotionHistory
 
 app = FastAPI()
 
+
+# ✅ CORS CONFIGURATION
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # allow all origins (OK for dev)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post("/detect-emotion", response_model=EmotionResponse)
